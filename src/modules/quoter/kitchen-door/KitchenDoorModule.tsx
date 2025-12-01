@@ -1,17 +1,6 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import * as PIXI from "pixi.js";
-import {
-  Layers,
-  AlertTriangle,
-  CheckCircle2,
-  Trash2,
-  Plus,
-  ArrowRightLeft,
-  FileSpreadsheet,
-  Wrench,
-  X,
-  ScanLine, // Icono para Cantos
-} from "lucide-react";
+import { Layers, AlertTriangle, CheckCircle2, Trash2, Plus, ArrowRightLeft, FileSpreadsheet, Wrench, X, ScanLine, Copy } from "lucide-react";
 
 /* ===========================================================================
   CAPA DE DATOS & SERVICIOS MOCK
@@ -19,23 +8,47 @@ import {
 */
 
 // Catálogo de Modelos
-const CATALOG_MODELS = [
+interface DoorModel {
+  id: string;
+  name: string;
+  type: string;
+  minW: number;
+  minH: number;
+  thickness: number;
+  frameWidth?: number;
+}
+
+const CATALOG_MODELS: DoorModel[] = [
   { id: "MOD_LISO", name: "Serie Flat (Lisa)", type: "FLAT", minW: 100, minH: 100, thickness: 19 },
   { id: "MOD_J_PULL", name: "Serie Integra (Uñero J)", type: "J_PULL", minW: 150, minH: 100, thickness: 22 },
   { id: "MOD_SHAKER", name: "Serie Oxford (Enmarcada)", type: "SHAKER", minW: 250, minH: 250, frameWidth: 60, thickness: 22 },
 ];
 
 // Acabados (Superficies)
-const FINISHES = [
+interface Finish {
+  id: string;
+  name: string;
+  group: string;
+  color: number;
+}
+
+const FINISHES: Finish[] = [
   { id: "F01", name: "Blanco Mate", group: "G1", color: 0xf5f5f5 },
   { id: "F02", name: "Roble Nudos", group: "G2", color: 0xd2b48c },
   { id: "F03", name: "Gris Antracita", group: "G1", color: 0x374151 },
   { id: "F04", name: "Azul Noche (Laca)", group: "G3", color: 0x1e3a8a },
 ];
 
-// NUEVO: Catálogo de Cantos (Edge Banding)
-const CATALOG_EDGES = [
-  { id: "EDGE_AUTO", name: "Igual a Superficie (Estándar)", pricePerMeter: 1.5, color: null }, // Color null = hereda
+// Catálogo de Cantos (Edge Banding)
+interface Edge {
+  id: string;
+  name: string;
+  pricePerMeter: number;
+  color: number | null;
+}
+
+const CATALOG_EDGES: Edge[] = [
+  { id: "EDGE_AUTO", name: "Igual a Superficie (Estándar)", pricePerMeter: 1.5, color: null },
   { id: "EDGE_ALU", name: "PVC Efecto Aluminio", pricePerMeter: 2.8, color: 0xcccccc },
   { id: "EDGE_PLY", name: "PVC Efecto Contrachapado", pricePerMeter: 3.5, color: 0xeebb99 },
   { id: "EDGE_BLK", name: "PVC Negro Mate", pricePerMeter: 2.0, color: 0x222222 },
@@ -43,7 +56,14 @@ const CATALOG_EDGES = [
 ];
 
 // Extras / Accesorios
-const CATALOG_EXTRAS = [
+interface Extra {
+  id: string;
+  name: string;
+  price: number;
+  category: string;
+}
+
+const CATALOG_EXTRAS: Extra[] = [
   { id: "DRILL_STD", name: "Taladro Bisagra Std", price: 1.5, category: "Mecanizado" },
   { id: "HANDLE_GOLA", name: "Perfil Gola (Corte)", price: 4.0, category: "Mecanizado" },
   { id: "HANDLE_KNOB", name: "Tirador Pomo Negro", price: 3.2, category: "Herraje" },
@@ -57,7 +77,7 @@ const PRICING_MATRIX = {
 };
 
 const PricingService = {
-  calculatePrice: (w: number, h: number, finishGroup: string | undefined, edgeId: string, extrasIds: string[] = []) => {
+  calculatePrice: (w: number, h: number, finishGroup: string | undefined, edgeId: string, extrasIds: string[] = []): number => {
     if (!w || !h) return 0;
 
     // 1. Precio Base (M2)
@@ -71,7 +91,7 @@ const PricingService = {
 
     let total = (PRICING_MATRIX.basePrice + area * 80) * groupMultiplier * widthPremium * heightPremium;
 
-    // 2. NUEVO: Precio del Canto (Metro Lineal)
+    // 2. Precio del Canto (Metro Lineal)
     // Perímetro = (Ancho + Alto) * 2 / 1000 para pasar a metros
     const perimeterMeters = (w * 2 + h * 2) / 1000;
     const edgeObj = CATALOG_EDGES.find((e) => e.id === edgeId) || CATALOG_EDGES[0];
@@ -98,12 +118,12 @@ interface DoorPreviewProps {
   modelType: string;
   color: number;
   edgeColor: number | null;
-  grainDirection: string;
-  extras?: string[];
+  grainDirection: "vertical" | "horizontal";
+  extras: string[];
   frameWidth?: number;
 }
 
-const DoorPreview = ({ width, height, modelType, color, edgeColor, grainDirection, extras = [], frameWidth = 60 }: DoorPreviewProps) => {
+const DoorPreview: React.FC<DoorPreviewProps> = ({ width, height, modelType, color, edgeColor, grainDirection, extras = [], frameWidth = 60 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const appRef = useRef<PIXI.Application | null>(null);
 
@@ -116,9 +136,9 @@ const DoorPreview = ({ width, height, modelType, color, edgeColor, grainDirectio
       antialias: true,
       resolution: window.devicePixelRatio || 1,
     });
-    containerRef.current.appendChild(app.view as HTMLCanvasElement);
+    containerRef.current.appendChild(app.view as unknown as Node);
     appRef.current = app;
-    return () => app.destroy(true, { children: true, texture: true, baseTexture: true });
+    return () => app.destroy(true, { children: true, texture: true });
   }, []);
 
   useEffect(() => {
@@ -142,24 +162,18 @@ const DoorPreview = ({ width, height, modelType, color, edgeColor, grainDirectio
     const startX = (canvasW - drawW) / 2;
     const startY = (canvasH - drawH) / 2;
 
-    // --- NUEVO: Logica de Color de Canto ---
-    // Si edgeColor es null, usamos el color de la puerta pero un poco más oscuro para que se note el borde
-
-    // Si el canto es igual a la superficie, dibujamos linea fina oscura, si es diferente, linea gruesa del color
+    // const finalEdgeColor = edgeColor !== null ? edgeColor : color;
     const strokeThickness = edgeColor !== null ? 4 * scale : 1;
     const strokeColor = edgeColor !== null ? edgeColor : 0x000000;
     const strokeAlpha = edgeColor !== null ? 1 : 0.2;
 
-    // 1. Base (Cuerpo de la puerta)
     const door = new PIXI.Graphics();
 
-    // Dibujar Canto (Borde)
     door.lineStyle(strokeThickness, strokeColor, strokeAlpha);
     door.beginFill(color);
     door.drawRect(0, 0, drawW, drawH);
     door.endFill();
 
-    // 2. Modelo Interior
     if (modelType === "SHAKER") {
       const framePx = frameWidth * scale;
       door.lineStyle(1, 0x000000, 0.1);
@@ -172,7 +186,6 @@ const DoorPreview = ({ width, height, modelType, color, edgeColor, grainDirectio
       door.endFill();
     }
 
-    // 3. Veta
     if (grainDirection) {
       const lines = new PIXI.Graphics();
       lines.lineStyle(1, 0x000000, 0.05);
@@ -191,7 +204,6 @@ const DoorPreview = ({ width, height, modelType, color, edgeColor, grainDirectio
       door.addChild(lines);
     }
 
-    // 4. Mecanizados
     if (extras.includes("DRILL_STD")) {
       const holeSize = 35 * scale;
       const offset = 100 * scale;
@@ -204,7 +216,6 @@ const DoorPreview = ({ width, height, modelType, color, edgeColor, grainDirectio
       door.addChild(holes);
     }
 
-    // Icono mecanizados especiales
     if (extras.some((e) => e !== "DRILL_STD")) {
       const icon = new PIXI.Text("⚙️", { fontSize: 24 * scale });
       icon.x = drawW - 30 * scale;
@@ -216,7 +227,6 @@ const DoorPreview = ({ width, height, modelType, color, edgeColor, grainDirectio
     door.y = startY;
     app.stage.addChild(door);
 
-    // Cotas
     const style = new PIXI.TextStyle({ fontFamily: "Arial", fontSize: 12, fill: "#666" });
     const textW = new PIXI.Text(`${width}mm`, style);
     textW.x = startX + drawW / 2 - textW.width / 2;
@@ -241,10 +251,10 @@ interface ExtrasModalProps {
   isOpen: boolean;
   onClose: () => void;
   selectedExtras: string[];
-  onToggleExtra: (id: string) => void;
+  onToggleExtra: (extraId: string) => void;
 }
 
-const ExtrasModal = ({ isOpen, onClose, selectedExtras, onToggleExtra }: ExtrasModalProps) => {
+const ExtrasModal: React.FC<ExtrasModalProps> = ({ isOpen, onClose, selectedExtras, onToggleExtra }) => {
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
@@ -314,11 +324,19 @@ interface Row {
   notes: string;
 }
 
+interface DefaultConfig {
+  modelId: string;
+  finishId: string;
+  edgeId: string;
+  grainDirection: "vertical" | "horizontal";
+  customerRef: string;
+}
+
 export default function KitchenDoorModule() {
-  const [defaultConfig, setDefaultConfig] = useState({
+  const [defaultConfig, setDefaultConfig] = useState<DefaultConfig>({
     modelId: "MOD_LISO",
     finishId: "F01",
-    edgeId: "EDGE_AUTO", // Default edge setting
+    edgeId: "EDGE_AUTO",
     grainDirection: "vertical",
     customerRef: "",
   });
@@ -341,7 +359,7 @@ export default function KitchenDoorModule() {
       type: "DRAWER",
       modelId: "MOD_LISO",
       finishId: "F03",
-      edgeId: "EDGE_ALU", // Ejemplo: Cajón Gris con canto Aluminio
+      edgeId: "EDGE_ALU",
       width: 600,
       height: 180,
       qty: 1,
@@ -350,10 +368,9 @@ export default function KitchenDoorModule() {
     },
   ]);
 
-  const [selectedRowId, setSelectedRowId] = useState(1);
+  const [selectedRowId, setSelectedRowId] = useState<number>(1);
   const [editingExtrasId, setEditingExtrasId] = useState<number | null>(null);
 
-  // --- Helpers ---
   const activeRow = rows.find((r) => r.id === selectedRowId) || rows[0];
   const activeRowModel = CATALOG_MODELS.find((m) => m.id === activeRow.modelId) || CATALOG_MODELS[0];
   const activeRowFinish = FINISHES.find((f) => f.id === activeRow.finishId) || FINISHES[0];
@@ -367,8 +384,7 @@ export default function KitchenDoorModule() {
     }, 0);
   }, [rows]);
 
-  // --- Handlers ---
-  const handleRowChange = (id: number, field: keyof Row, value: any) => {
+  const handleRowChange = <K extends keyof Row>(id: number, field: K, value: Row[K]) => {
     setRows((prev) =>
       prev.map((row) => {
         if (row.id === id) return { ...row, [field]: value };
@@ -411,6 +427,20 @@ export default function KitchenDoorModule() {
     setSelectedRowId(newId);
   };
 
+  const duplicateRow = (id: number) => {
+    const rowToClone = rows.find((r) => r.id === id);
+    if (rowToClone) {
+      const newId = Math.max(...rows.map((r) => r.id), 0) + 1;
+      const clonedRow = {
+        ...rowToClone,
+        id: newId,
+        extras: [...rowToClone.extras],
+      };
+      setRows([...rows, clonedRow]);
+      setSelectedRowId(newId);
+    }
+  };
+
   const removeRow = (id: number) => {
     if (rows.length > 1) {
       setRows(rows.filter((r) => r.id !== id));
@@ -425,7 +455,6 @@ export default function KitchenDoorModule() {
 
   return (
     <div className="flex flex-col h-screen bg-gray-50 text-slate-800 font-sans overflow-hidden">
-      {/* HEADER: CONFIG DEFAULT */}
       <header className="bg-white border-b border-gray-200 px-6 py-4 shadow-sm z-10">
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center gap-3">
@@ -445,7 +474,6 @@ export default function KitchenDoorModule() {
           </div>
         </div>
 
-        {/* Default Settings */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 bg-slate-50 p-4 rounded-lg border border-slate-200 relative">
           <div className="absolute -top-3 left-3 bg-slate-50 px-2 text-xs font-bold text-slate-400">VALORES POR DEFECTO</div>
 
@@ -523,7 +551,6 @@ export default function KitchenDoorModule() {
         </div>
       </header>
 
-      {/* MAIN GRID */}
       <div className="flex flex-1 overflow-hidden">
         <div className="flex-1 flex flex-col border-r border-gray-200 bg-white">
           <div className="p-2 bg-gray-100 border-b border-gray-200 flex justify-between items-center">
@@ -553,7 +580,7 @@ export default function KitchenDoorModule() {
                   <th className="py-2 px-2 text-xs font-semibold text-gray-500 border-b w-16">Cant.</th>
                   <th className="py-2 px-2 text-xs font-semibold text-gray-500 border-b w-20 text-center">Extras</th>
                   <th className="py-2 px-2 text-xs font-semibold text-gray-500 border-b text-right">Precio Ud.</th>
-                  <th className="py-2 px-2 text-xs font-semibold text-gray-500 border-b w-8"></th>
+                  <th className="py-2 px-2 text-xs font-semibold text-gray-500 border-b w-14"></th>
                 </tr>
               </thead>
               <tbody>
@@ -607,7 +634,6 @@ export default function KitchenDoorModule() {
                           ))}
                         </select>
                       </td>
-                      {/* NUEVA COLUMNA DE CANTOS EN GRID */}
                       <td className="py-1 px-2">
                         <select
                           className="w-full bg-white/50 border border-gray-200 rounded px-1 py-0.5 text-xs text-gray-600 focus:ring-1 focus:ring-indigo-500"
@@ -665,15 +691,28 @@ export default function KitchenDoorModule() {
                         </button>
                       </td>
                       <td className="py-1 px-2 text-right font-mono text-gray-700 text-xs">{unitPrice.toFixed(2)}€</td>
+
                       <td className="py-1 px-2 text-center">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeRow(row.id);
-                          }}
-                          className="text-gray-300 hover:text-red-500">
-                          <Trash2 size={14} />
-                        </button>
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              duplicateRow(row.id);
+                            }}
+                            className="p-1 text-gray-300 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
+                            title="Duplicar Fila">
+                            <Copy size={14} />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeRow(row.id);
+                            }}
+                            className="p-1 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                            title="Eliminar Fila">
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -689,13 +728,11 @@ export default function KitchenDoorModule() {
           </div>
         </div>
 
-        {/* RIGHT: INSPECTOR TÉCNICO */}
         <div className="w-80 bg-slate-100 border-l border-gray-200 flex flex-col shadow-inner">
           <div className="p-4 border-b border-gray-200 bg-white">
             <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Inspector Técnico</h3>
             <div className="text-sm font-bold text-gray-800">{activeRowModel.name}</div>
 
-            {/* Detalles Material y Canto */}
             <div className="mt-2 space-y-1">
               <div className="flex justify-between text-xs">
                 <span className="text-gray-500">Acabado:</span>
@@ -729,7 +766,7 @@ export default function KitchenDoorModule() {
                   height={activeRow.height}
                   modelType={activeRowModel.type}
                   color={activeRowFinish.color}
-                  edgeColor={activeRowEdge.color} // Pasamos el color del canto al visualizador
+                  edgeColor={activeRowEdge.color}
                   grainDirection={defaultConfig.grainDirection}
                   extras={activeRow.extras}
                   frameWidth={activeRowModel.frameWidth}
@@ -742,7 +779,6 @@ export default function KitchenDoorModule() {
         </div>
       </div>
 
-      {/* MODAL EXTRAS */}
       {editingExtrasId && (
         <ExtrasModal
           isOpen={!!editingExtrasId}

@@ -1,5 +1,6 @@
 import React, { Suspense, lazy } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
+import CuttingV2Module from "../modules/quoter/cutting-v2/CuttingV2Module";
 
 // Lazy loading con rutas actualizadas
 const LandingHub = lazy(() => import("../modules/landing/LandingModule"));
@@ -31,6 +32,9 @@ const AppRoutes: React.FC = () => {
 
         {/* Módulo Presupuestador Corte */}
         <Route path="/apps/quoter/cutting" element={<CuttingModule />} />
+
+        {/* Módulo Presupuestador Corte V2 */}
+        <Route path="/apps/quoter/cutting-v2" element={<CuttingV2Module />} />
 
         {/* Módulo Presupuestador Puertas de Cocina */}
         <Route path="/apps/quoter/kitchen-door" element={<KitchenDoorModule />} />

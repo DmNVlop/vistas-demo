@@ -37,9 +37,9 @@ export const SUITE_PRODUCTS: SuiteProduct[] = [
   },
   {
     id: "quoter-cut-v2",
-    name: "Optimización y Corte",
+    name: "Optimización y Corte- V2",
     category: "Presupuestador",
-    description: "Cálculo de tableros y mecanizado.",
+    description: "Cálculo de piezas, tableros y cantos.",
     icon: Scissors,
     color: "emerald",
     path: "/apps/quoter/cutting-v2",

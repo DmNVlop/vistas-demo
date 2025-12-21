@@ -4,11 +4,13 @@ import CuttingV2Module from "../modules/quoter/cutting-v2/CuttingV2Module";
 
 // Lazy loading con rutas actualizadas
 const LandingHub = lazy(() => import("../modules/landing/LandingModule"));
+const ASPModule = lazy(() => import("../modules/asp/AspModule"));
 const MesModule = lazy(() => import("../modules/mes/MesModule"));
 const QuoterModule = lazy(() => import("../modules/quoter/QuoterModule"));
 
 const CuttingModule = lazy(() => import("../modules/quoter/cutting/CuttingModule"));
 const KitchenDoorModule = lazy(() => import("../modules/quoter/kitchen-door/KitchenDoorModule"));
+const KitchenDoorV2Module = lazy(() => import("../modules/quoter/kitchen-door-v2/KitchenDoorV2Module"));
 
 const PageLoader = () => (
   <div className="h-screen w-full flex flex-col items-center justify-center bg-slate-950 text-blue-500">
@@ -24,6 +26,9 @@ const AppRoutes: React.FC = () => {
         {/* Landing Page */}
         <Route path="/" element={<LandingHub />} />
 
+        {/* Módulo APS (Con subrutas si fuera necesario, por ahora maneja estado interno) */}
+        <Route path="/apps/aps/*" element={<ASPModule />} />
+
         {/* Módulo MES/APS (Con subrutas si fuera necesario, por ahora maneja estado interno) */}
         <Route path="/apps/mes/*" element={<MesModule />} />
 
@@ -38,6 +43,9 @@ const AppRoutes: React.FC = () => {
 
         {/* Módulo Presupuestador Puertas de Cocina */}
         <Route path="/apps/quoter/kitchen-door" element={<KitchenDoorModule />} />
+
+        {/* Módulo Presupuestador Puertas de Cocina V2 */}
+        <Route path="/apps/quoter/kitchen-door-v2" element={<KitchenDoorV2Module />} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

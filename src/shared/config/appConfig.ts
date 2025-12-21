@@ -18,6 +18,15 @@ export interface SuiteProduct {
 
 export const SUITE_PRODUCTS: SuiteProduct[] = [
   {
+    id: "aps",
+    name: "APS Pro",
+    category: "Producción",
+    description: "Modulo de Planificacion de la Producción.",
+    icon: Factory,
+    color: "blue",
+    path: "/apps/aps",
+  },
+  {
     id: "mes-aps",
     name: "MES & APS Pro",
     category: "Producción",
@@ -52,6 +61,15 @@ export const SUITE_PRODUCTS: SuiteProduct[] = [
     icon: Grid,
     color: "orange",
     path: "/apps/quoter/kitchen-door",
+  },
+  {
+    id: "quoter-kitchen-v2",
+    name: "Puertas de Cocinas - V2",
+    category: "Presupuestador",
+    description: "Configurador paramétrico de puertas de cocinas. V2.",
+    icon: Grid,
+    color: "orange",
+    path: "/apps/quoter/kitchen-door-v2",
   },
   {
     id: "quoter-doors",
